@@ -54,14 +54,14 @@ export default class CacheImage extends React.PureComponent {
         const {children, ...props} = this.props
         if (children) {
             return <ImageBackground
-                {...props}
-                source={this.state.source}>
+            {...props}
+            source={this.state.source}>
                 {children}
-            </ImageBackground>
+                </ImageBackground>
         } else {
             return <Image
-                {...props}
-                source={this.state.source}/>
+            {...props}
+            source={this.state.source}/>
         }
     }
 

@@ -1,29 +1,30 @@
-import {AsyncStorage, DeviceEventEmitter} from "react-native";
-import CryptoJS from 'crypto-js'
-import RNFetchBlob from 'rn-fetch-blob'
+import {DeviceEventEmitter} from "react-native";
+import AsyncStorage from '@react-native-community/async-storage';
+import CryptoJS from 'crypto-js';
+import RNFetchBlob from 'rn-fetch-blob';
 
-const STORAGE_KEY = 'cache-image-entity'
-const TOTAL_DIRECTORYS = 17
-const {fs} = RNFetchBlob
+const STORAGE_KEY = 'cache-image-entity';
+const TOTAL_DIRECTORYS = 17;
+const {fs} = RNFetchBlob;
 
 const cacheEntity = {
     cacheMap: {},
     latest: false
-}
+};
 
 // download image tasks
-const taskList = {}
+const taskList = {};
 
 /**
  * urls of downloading
  * {'url':{ing:true, notify:true}}
  */
-const downloading = {}
+const downloading = {};
 
 const config = {
     overwrite: false,
     dirsQuantity: TOTAL_DIRECTORYS
-}
+};
 
 /**
  * 加法hash算法
@@ -37,25 +38,25 @@ const additiveHash = value => {
         hash += parseInt(`0x${v}`, 16)
     }
     return hash % config.dirsQuantity
-}
+};
 
 /**
  * 图片存储的基本目录
  * @returns {string}
  */
-const getImagesCacheDirectory = () => `${fs.dirs.CacheDir}/cache-images`
+const getImagesCacheDirectory = () => `${fs.dirs.CacheDir}/cache-images`;
 
 const getEncryptedInfo = fileOriginalName => {
     const filename = CryptoJS.MD5(fileOriginalName).toString()
     const directory = additiveHash(filename)
     return {filename, directory}
-}
+};
 
 /**
  * 图片存储临时目录
  * @returns {string}
  */
-const getTmpDir = () => `${getImagesCacheDirectory()}/tmp`
+const getTmpDir = () => `${getImagesCacheDirectory()}/tmp`;
 
 
 /**
@@ -74,7 +75,7 @@ const getImagePath = async (originalUri) => {
         else return await _fetchImage(originalUri).catch(e => printLog(e))
     }
     return await _fetchImage(originalUri).catch(e => printLog(e))
-}
+};
 
 /**
  * fetch image data from newwork and update cache map
@@ -117,7 +118,7 @@ const _fetchImage = async (originalUri) => {
     }
 
     return `file://${cachePath}`
-}
+};
 
 /**
  * create tmp dir just once
@@ -131,7 +132,7 @@ const _createTmpDir = async () => {
     if (!isRootDirExists) await fs.mkdir(rootDir).catch(e => printLog(e))
     const isTmpDirExists = await fs.isDir(tmpDir).catch(e => printLog(e))
     if (!isTmpDirExists) await fs.mkdir(tmpDir).catch(e => printLog(e))
-}
+};
 
 /**
  * move the tmp image file to final local path
@@ -156,7 +157,7 @@ const _moveImage = async (toDir, from, to) => {
     }
     await fs.mv(from, to).catch(e => console.log(e))
     return false
-}
+};
 
 /**
  * get the latest CacheEntity
@@ -177,7 +178,7 @@ const _syncStorage2CacheEntity = async () => {
         }
         Object.assign(cacheEntity, entity, {latest: true})
     }
-}
+};
 
 /**
  * save the pair of original-image-uri and final-cache-path
@@ -191,7 +192,7 @@ const _saveCacheKey = async (originalUri, cachePath) => {
     const {cacheMap = {}} = cacheEntity
     cacheMap[originalUri] = cachePath
     await _syncCacheEntity2Storage().catch(e => printLog(e))
-}
+};
 
 /**
  * sync save CacheEntity to storage
@@ -202,7 +203,7 @@ const _syncCacheEntity2Storage = async () => {
     if (cacheEntity) {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cacheEntity)).catch(e => printLog(e))
     }
-}
+};
 
 /**
  * get image type
@@ -215,7 +216,7 @@ const _getImageExtension = (response) => {
     const contentType = info.headers['Content-Type'] || ''
     const matchResult = contentType.match(/image\/(png|jpg|jpeg|bmp|gif|webp|psd);/i)
     return matchResult && matchResult.length >= 2 ? matchResult[1] : 'png'
-}
+};
 
 /**
  * register cache image service
@@ -236,7 +237,7 @@ const register = async (cacheConfig) => {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(entity)).catch(e => printLog(e))
     }
     Object.assign(cacheEntity, entity, {latest: true})
-}
+};
 
 const unregister = async () => {
     for (let key in taskList) {
@@ -246,7 +247,7 @@ const unregister = async () => {
             printLog(e)
         }
     }
-}
+};
 
 /**
  * get all files Recursively
@@ -277,7 +278,7 @@ const getFiles = async (path) => {
     } else {
         return [await fs.stat(path)]
     }
-}
+};
 
 /**
  * get the cache size. unit:bytes
@@ -292,7 +293,7 @@ const getCacheSize = async () => {
         size += parseInt(file.size)
     }
     return size
-}
+};
 
 /**
  * get cache size with format
@@ -305,7 +306,7 @@ const getCacheSizeFormat = async () => {
     } else {
         return `${Number(size / (1024 * 1024)).toFixed(2)}MB`
     }
-}
+};
 
 /**
  * clear cache
@@ -326,19 +327,19 @@ const clearCache = async () => {
     }
 
     await _syncCacheEntity2Storage().catch(e => printLog(e))
-}
+};
 
 const event = {
     render: 'cacheimage_event_render_image',
-}
+};
 
 const pattern = {
     remoteUri: /^(http[s]?)/i
-}
+};
 
 const printLog = (v) => {
     if (process.env.NODE_ENV !== 'production') console.log(v)
-}
+};
 
 export default {
     register,
